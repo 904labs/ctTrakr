@@ -4,11 +4,13 @@ CTcue Trakr
 ## Development
 
 Required:
-- Node.js 0.11.* + NPM
 - Python 3
 - Natural Language ToolKit (NLTK)
 - Flask + Flask Restful
 
-- Run /frontend/npm install
+To start frontend run
+- /frontend/npm install && npm start
+- or use a python SimpleHTTPServer
 
-To start run /frontend/npm start & python3 /backend/api.py
+To start backend run 
+- python3 /backend/api.py
