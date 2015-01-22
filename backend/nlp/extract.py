@@ -3,86 +3,53 @@ from nlp import simple
 from data import scores
 
 
-def pattern_based(**kwargs):
-	"""Extract scores based on string patterns.
-	Results in high precision, but is likely to lower recall.
+def health_scores(**kwargs):
+	"""Extract health scores based on occurrence of the score name and synonyms.
+	Test potential values against a set of constraints (min, max, type, and format).
 	"""
 
-	if 'text' not in kwargs.keys() or 'metric' not in kwargs.keys():
+	if 'text' not in kwargs.keys() or 'metrics' not in kwargs.keys():
 		return None
 
-	extracted = _extraction(kwargs['metric'], kwargs['text'], "patterns")
+	extracted = _extraction(kwargs['metrics'], kwargs['text'])
 
 	return extracted
 
 
-def score_based(**kwargs):
-	"""Extract scores based on occurrence of the score name and synonyms.
-	Results in high recall, but could potentially harm precision.
-	"""
+def _extraction(metrics, text):
+	reload(scores)
 
-	if 'text' not in kwargs.keys() or 'metric' not in kwargs.keys():
-		return None
+	found_scores = {}
 
-	extracted = _extraction(kwargs['metric'], kwargs['text'], "synonyms")
-
-	return extracted
-
-
-def two_stage(**kwargs):
-	"""Extract scores based in two stages.
-	First tries to use patterns, if it does not get a result, it uses score name and synonyms.
-	"""
-
-	pattern_extraction = pattern_based(**kwargs)
-	if pattern_extraction is not None:
-		return pattern_extraction
-
-	score_extraction = score_based(**kwargs)
-	if score_extraction is not None:
-		return score_extraction
-
-	return None
-
-
-def _extraction(metric, text, search_type):
-	score_data = None
-	try:
-		score_data = scores.metrics[metric]
-	except KeyError:
-		print "Metric does not exist"
-		return None
+	# search for scores, only move forward with the ones we actually find in text
+	search_metrics = {}
+	patterns = {}
+	for m in metrics:
+		score_data = None
+		try:
+			score_data = scores.metrics[m]
+		except KeyError:
+			continue
+		else:
+			search_string = "(" + "|".join(score_data['synonyms']) + ")"
+			pattern = re.compile(r'%s'%search_string, flags=re.IGNORECASE|re.UNICODE|re.MULTILINE|re.DOTALL)
+			if pattern.search(text) is not None:
+				patterns[m] = pattern
+				search_metrics[m] = score_data
+				found_scores[m] = []
 
 	sentences = simple.sentence_split(text=text)
 
-	# find matching sentence
-	search_strings = []
-	try:
-		search_strings = score_data[search_type]
-	except KeyError:
-		print "Search strings " + search_type + " does not exist"
-		return None
-
-	match = _find_sentence(sentences, search_strings)
-	if match is None:
-		return None
-
-	score = _extract_value(match, score_data['values'])
-	if score is None:
-		return None	
-
-	return {metric : score}
+	for s in sentences:
+		for m in search_metrics:
+		# check if sentence contains any of the metrics
+			if _contains_metric_name(patterns[m], s) is not None:
+				matching_score = _extract_value(s, search_metrics[m]['values'])
+				if matching_score is not None:
+					found_scores[m].append({'value':matching_score, 'evidence':s})
 
 
-def _find_sentence(sentences, metrics):
-	search_string = "(" + "|".join(metrics) + ")"
-	pattern = re.compile(r'%s'%search_string, flags=re.IGNORECASE|re.UNICODE|re.MULTILINE|re.DOTALL)
-
-	for sentence in sentences:
-		if _contains_metric_name(pattern, sentence) is not None:
-			return sentence
-
-	return None
+	return found_scores
 
 
 def _contains_metric_name(pattern, text):
@@ -96,7 +63,7 @@ def _extract_value(sentence, value_characteristics):
 	matches = pattern.finditer(sentence)
 	for m in matches:
 		try:
-			value = function(m.group(0))
+			value = function(m.group(value_characteristics['group']))
 			if value >= value_characteristics['min'] and value <= value_characteristics['max']:
 				return value
 		except ValueError:
