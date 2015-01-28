@@ -9,12 +9,8 @@ Required:
 - Flask
 - Tornado
 
-To start frontend run
-- /frontend/npm install && npm start
-- or use a python SimpleHTTPServer
-
 To start backend run
-- python /backend/api.py
+- python /api.py
 
 The server runs on `http://127.0.0.1:5000` by default
 
@@ -44,7 +40,7 @@ All tasks require data to be submitted using POST requests with content-type app
 ```python
 data    = {"text" : "Example sentences, which can be tokenized. We can also split the sentences."}
 headers = {'Content-Type': 'application/json'}
-url     = "http://127.0.0.1:5000/api/simpletokenize"
+url     = "http://127.0.0.1:5000/api/simple/tokenize"
 
 requests.post(url, data=json.dumps(data), headers=headers)
 ```
