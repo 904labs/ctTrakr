@@ -1,4 +1,4 @@
-CTcue Trakr
+CTcue Analyzer
 =========
 
 ## Development
@@ -13,9 +13,21 @@ To start frontend run
 - /frontend/npm install && npm start
 - or use a python SimpleHTTPServer
 
-To start backend run 
+To start backend run
 - python /backend/api.py
 The server runs standard on http://127.0.0.1:5000
+
+Example on server (inside the directory):
+`python api.py --host 188.226.214.70 --port 5000`
+
+## Install
+
+Assuming you have pip.
+
+* sudo pip install nltk
+* sudo python -m nltk.downloader -d /usr/share/nltk_data all
+* sudo pip install flask
+* sudo pip install -U flask-cors
 
 ## Extraction
 
@@ -58,7 +70,7 @@ A list of sentences.
 ```python
 {
   "result": [
-    "Example sentences, which can be tokenized.", 
+    "Example sentences, which can be tokenized.",
     "We can also split the sentences."
   ]
 }
@@ -84,7 +96,7 @@ health_scores = {
 			'agatstonscore',
 			'kalkscore',
 			'calciumscore'
-		], 
+		],
 
 		'values' : {
 			'type' : int,
@@ -104,7 +116,7 @@ The resulting json objects contains for each requested health score a list of id
   "result": {
     "agatston": [
       {
-        "evidence": "We can extract scores like an agatston score of 432.", 
+        "evidence": "We can extract scores like an agatston score of 432.",
         "value": 432
       }
     ]
