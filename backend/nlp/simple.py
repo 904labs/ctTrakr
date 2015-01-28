@@ -7,7 +7,7 @@ def tokenize(**kwargs):
 	if 'text' in kwargs.keys():
 		return word_tokenize(kwargs['text'])
 
-	return None
+	raise InvalidUsage('No text object in POST data', status_code=400)
 
 
 def sentence_split(**kwargs):
@@ -20,4 +20,4 @@ def sentence_split(**kwargs):
 	if 'text' in kwargs.keys():
 		return tokenizer.tokenize(kwargs['text'])
 
-	return None
+	raise InvalidUsage('No text object in POST data', status_code=400)

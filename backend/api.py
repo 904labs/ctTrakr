@@ -2,20 +2,31 @@ import argparse
 import json
 import logging
 
-from flask import Flask, Response, abort, request, jsonify
+from flask import Flask, Response, request, jsonify
 from flask.ext.cors import CORS
 
 from tornado.wsgi import WSGIContainer
 from tornado.httpserver import HTTPServer
 from tornado.ioloop import IOLoop
 
-#logging.basicConfig(filename='example.log', filemode='w', level=logging.DEBUG)
+from util import errors
 
+#logging.basicConfig(filename='example.log', filemode='w', level=logging.DEBUG)
 
 app = Flask(__name__)
 app.config['CORS_HEADERS'] = 'Content-Type'
 
 CORS(app, resources={r"/api/*" : {"origins" : "*"}})
+
+@app.errorhandler(errors.CustomAPIError)
+def handle_invalid_usage(error):
+	response = error.to_dict()
+	return response
+
+
+@app.route('/api/<tasktype>/<taskname>', methods=['GET'])
+def run_task_get(tasktype, taskname):
+	raise errors.CustomAPIError('Method not allowed', status_code=405, payload={'method':'GET'})
 
 
 @app.route('/api/<tasktype>/<taskname>', methods=['POST'])
@@ -31,7 +42,7 @@ def run_task(tasktype, taskname):
 		nlp  = getattr(__import__("nlp", fromlist=[tasktype]), tasktype)
 		func = getattr(nlp, taskname)
 	except AttributeError:
-		abort(404)
+		raise errors.CustomAPIError('Cannot locate endpoint', status_code=404, payload={'requested_endpoint':'api/%s/%s'%(tasktype,taskname)})
 	else:
 		content_type = request.headers['Content-Type']
 
@@ -40,7 +51,7 @@ def run_task(tasktype, taskname):
 			result = func(**kwargs)
 			return jsonify(result=result)
 
-		abort(404)
+		raise errors.CustomAPIError('Unsupported content-type', status_code=415, payload={'requested_content-type':content_type})
 
 
 if __name__ == '__main__':
