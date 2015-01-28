@@ -2,7 +2,7 @@ import re
 from nlp import simple
 from util import errors
 
-type_functions = {'int':int, 'float':float, 'long':long, 'complex':complex}
+type_functions = {'int':int, 'float':float, 'long':long}
 
 def health_scores(**kwargs):
 	"""Extract health scores based on occurrence of the score name and synonyms.
@@ -66,7 +66,7 @@ def _extract_value(sentence, value_characteristics):
 		except KeyError:
 			raise errors.CustomAPIError('Invalid value type', status_code=400, payload={'value type':value_characteristics['values']['type']})
 
-		group    = value_characteristics['values']['group']
+		group = value_characteristics['values']['group']
 		check_constraints = True
 
 
