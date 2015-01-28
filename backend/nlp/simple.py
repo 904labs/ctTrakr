@@ -1,5 +1,5 @@
 from nltk.tokenize import word_tokenize, sent_tokenize
-
+from util import errors
 
 def tokenize(**kwargs):
 	"""Tokenize text using nltk's tokenizer."""
@@ -7,7 +7,7 @@ def tokenize(**kwargs):
 	if 'text' in kwargs.keys():
 		return word_tokenize(kwargs['text'])
 
-	raise InvalidUsage('No text object in POST data', status_code=400)
+	raise errors.CustomAPIError('No text argument found.', status_code=400, payload={'arguments':kwargs.keys()})
 
 
 def sentence_split(**kwargs):
@@ -20,4 +20,4 @@ def sentence_split(**kwargs):
 	if 'text' in kwargs.keys():
 		return tokenizer.tokenize(kwargs['text'])
 
-	raise InvalidUsage('No text object in POST data', status_code=400)
+	raise errors.CustomAPIError('No text argument found.', status_code=400, payload={'arguments':kwargs.keys()})

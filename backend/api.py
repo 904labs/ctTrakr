@@ -42,16 +42,20 @@ def run_task(tasktype, taskname):
 		nlp  = getattr(__import__("nlp", fromlist=[tasktype]), tasktype)
 		func = getattr(nlp, taskname)
 	except AttributeError:
-		raise errors.CustomAPIError('Cannot locate endpoint', status_code=404, payload={'requested_endpoint':'api/%s/%s'%(tasktype,taskname)})
+		raise errors.CustomAPIError('Cannot locate endpoint', status_code=404, payload={'endpoint':'api/%s/%s'%(tasktype,taskname)})
 	else:
 		content_type = request.headers['Content-Type']
 
 		if content_type == 'application/json':
 			kwargs = request.get_json()
 			result = func(**kwargs)
-			return jsonify(result=result)
+			return jsonify(result=result, status=200)
 
-		raise errors.CustomAPIError('Unsupported content-type', status_code=415, payload={'requested_content-type':content_type})
+		raise errors.CustomAPIError('Unsupported content-type', status_code=415, payload={'content-type':content_type})
+
+@app.route('/<path:path>', methods=['GET','POST'])
+def catchall(path):
+	raise errors.CustomAPIError('Cannot locate endpoint', status_code=404, payload={'endpoint':path})
 
 
 if __name__ == '__main__':
