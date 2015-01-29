@@ -192,7 +192,7 @@ class TestExtractionFunctions(unittest.TestCase):
 		self.assertEquals(result['status'], 400)
 
 	def test_types(self):
-		types = ('float','int','long')
+		types = ('float','int')
 		self.data['health_scores'] = self.health_scores
 
 		for t in types:

@@ -2,7 +2,7 @@ import re
 from nlp import simple
 from util import errors
 
-type_functions = {'int':int, 'float':float, 'long':long}
+type_functions = {'int':int, 'float':float}
 
 def health_scores(**kwargs):
 	"""Extract health scores based on occurrence of the score name and synonyms.
