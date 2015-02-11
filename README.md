@@ -26,6 +26,8 @@ Assuming you have pip.
 * sudo python -m nltk.downloader -d /usr/share/nltk_data all
 * sudo pip install flask
 * sudo pip install -U flask-cors
+* sudo pip install whoosh
+* sudo pip install tornado
 
 ## Extraction
 
@@ -112,13 +114,23 @@ Result:
 The resulting json objects contains for each requested health score a list of identified scores with evidence of why this value was extracted.
 ```python
 {
-  "result": {
-    "agatston": [
-      {
-        "evidence": "We can extract scores like an agatston score of 432.",
-        "value": 432
-      }
-    ]
-  }
+    "result": {
+        "agatston": [
+            {
+                "sentenceNr": 2,
+                "start": 30,
+                "term": "agatston",
+                "values": [
+                    432
+                ]
+            }
+        ],
+        "sentences": [
+            "Example sentences, which can be tokenized.",
+            "We can also split the sentences.",
+            "We can extract scores like an <em class=\"highlight\">agatston</em> score of 432."
+        ]
+    },
+    "status": 200
 }
 ```
