@@ -25,10 +25,11 @@ def _extraction(metrics, text):
 	highlighted = sentences[:] # Clone
 
 	result = {}
+	found_metrics = {}
 
 	# For each synonym see if it exists in the text
 	for m in metrics:
-		result[m] = []
+		found_metrics[m] = []
 
 		for term in sorted(metrics[m]['synonyms'], key=len, reverse=True):
 			pattern = re.compile(r'(\b)(%s)(\b)' % re.escape(term), flags=re.MULTILINE|re.IGNORECASE|re.UNICODE)
@@ -53,7 +54,7 @@ def _extraction(metrics, text):
 					# Combine findings
 					values = values_before_match + values_after_match
 
-					result[m].append({
+					found_metrics[m].append({
 						"sentenceNr" : index,
 						"term"       : term,
 						"start"      : match.start(2),
@@ -62,6 +63,7 @@ def _extraction(metrics, text):
 
 		# TODO Filter matches to pick "umbrella" terms
 
+	result["findings"]  = found_metrics
 	result["sentences"] = highlighted
 	return result
 
@@ -74,37 +76,18 @@ def _contains_metric_name(pattern, text):
 	return pattern.search(text)
 
 
+# TODO
+# Allow custom format (no need for min/max here yet)
 def _extract_value(sentence, value_characteristics):
-	check_constraints = False
-	pattern = create_pattern("(\-*\d+)((,|\.)\d+)?")
-	group = 0
-
-	if "values" in value_characteristics:
-		pattern  = create_pattern(value_characteristics['values']['format'])
-
-		try:
-			function = type_functions[value_characteristics['values']['type']]
-		except KeyError:
-			raise errors.CustomAPIError('Invalid value type', status_code=400, payload={'value type':value_characteristics['values']['type']})
-
-		group = value_characteristics['values']['group']
-		check_constraints = True
-	else:
+	if not "values" in value_characteristics:
 		return []
 
+	pattern = create_pattern("(\-*\d+)((,|\.)\d+)?")
+
 	result  = []
-	matches = pattern.finditer(sentence)
-	for m in matches:
-		try:
-			if not check_constraints:
-				return m.group(group)
 
-			value = function(m.group(group))
-
-			if value >= value_characteristics['values']['min'] and value <= value_characteristics['values']['max']:
-				result.append(value)
-
-		except ValueError:
-			continue
+	for m in pattern.finditer(sentence):
+		if m.group(0):
+			result.append(m.group(0))
 
 	return result
