@@ -16,7 +16,13 @@ The server runs on `http://127.0.0.1:5000` by default
 
 Example on server (inside the directory):
 
+`screen`
 `python api.py --host 188.226.214.70 --port 5000`
+
+Stopping it:
+
+`ps -ef | grep python`
+`kill -9 PID (ex. 2219)`
 
 ## Install
 
@@ -26,7 +32,6 @@ Assuming you have pip.
 * sudo python -m nltk.downloader -d /usr/share/nltk_data all
 * sudo pip install flask
 * sudo pip install -U flask-cors
-* sudo pip install whoosh
 * sudo pip install tornado
 
 ## Extraction
