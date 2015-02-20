@@ -30,6 +30,12 @@ def _extraction_wtr(metrics, text):
 	search_metrics = {}
 	patterns = {}
 	for m in metrics:
+
+		## UGLY HACK TO GET CONSTRAINTS IN CODE
+		metrics[m]['values'] = _characteristics(m)
+		print metrics[m]['values']
+		## END OF HACK
+
 		pattern = create_pattern("(" + "|".join(metrics[m]['synonyms']) + ")")
 		if pattern.search(text) is None:
 			continue
@@ -234,3 +240,40 @@ def _extract_value_wtr(sentence, value_characteristics, match):
 		return None
 
 	return [temp_score]
+
+
+## HACK FOR KNOWN SCORES
+def _characteristics(metric):
+	chars = {
+		'agatston' : {
+			'values' : {
+				'type' : "int",
+				'min' : 0,
+				'max' : 9999,
+				'format' : "(\-*\d+)((,|\.)\d+)?",
+				'group' : 0,
+				'position' : {
+					'before' : 0,
+					'after' : 40
+				}
+			}
+		},
+		'mesa' : {
+			'values' : {
+				'type' : "int",
+				'min' : 0,
+				'max' : 100,
+				'format' : ":*(\d{1,2})(e|ste)*",
+				'group' : 1,
+				'position' : {
+					'before'  : -10,
+					'after' : 35
+				}
+			}
+		}
+	}
+
+	if metric in chars:
+		return chars[metric]['values']
+
+	return {}
