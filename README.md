@@ -100,7 +100,11 @@ data =
                 "min": 0,
                 "max": 9999,
                 "format": "(\\-*\\d+)((,|\\.)\\d+)?",
-                "group": 0
+                "group": 0,
+                "position" : {
+                    "before" : -10,
+                    "after" : 10
+                }
             }
         }
     }
@@ -112,7 +116,7 @@ url     = "http://127.0.0.1:5000/api/extract/health_scores"
 requests.post(url, data=json.dumps(data), headers=headers)
 ```
 
-The variable health_scores is a json object that contains the scores that need to be extracted. These scores are identified by a name and contain a list of synonyms and a set of constraints that the scores should match. These constraints include the value type (int, float), the minimum and maximum value the score can have, and a string indicating the format (as regex). Finally, group indicates the regex group that contains the actual value. The json object can contain an unlimited number of health scores. The value constraints are optional, without it the system makes a "best guess." For synonyms it is advised to also add the original name of the score to the list.
+The variable health_scores is a json object that contains the scores that need to be extracted. These scores are identified by a name and contain a list of synonyms and a set of constraints that the scores should match. These constraints include the value type (int, float), the minimum and maximum value the score can have, the position the score can be found relative to the score's name, and a string indicating the format (as regex). Finally, group indicates the regex group that contains the actual value. The json object can contain an unlimited number of health scores. The value constraints are optional, without it the system makes a "best guess." For synonyms it is advised to also add the original name of the score to the list.
 
 
 Result:

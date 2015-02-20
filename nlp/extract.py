@@ -149,60 +149,88 @@ def _extract_value(sentence, value_characteristics):
 
 
 def _extract_value_wtr(sentence, value_characteristics, match):
-	check_constraints = False
-	pattern  = create_pattern("(\-*\d+)((,|\.)\d+)?")
-	group    = 0
-	start    = 0
-	end      = len(sentence)
+	checks = {
+		'type' : False,
+		'min' : False,
+		'max' : False
+	}
 
-	if "values" in value_characteristics:
+	# Determine pattern to use for score finding
+	pattern  = create_pattern("(\-*\d+)((,|\.)\d+)?")
+	if "format" in value_characteristics['values']:
 		pattern  = create_pattern(value_characteristics['values']['format'])
 
+	# Group within the MatchObject that contains the score
+	group = 0
+	if "group" in value_characteristics['values']:
+		group = value_characteristics['values']['group']
+
+	# Type of the score (int, float)
+	if "type" in value_characteristics['values']:
+		checks['type'] = True
 		try:
 			function = type_functions[value_characteristics['values']['type']]
 		except KeyError:
 			raise errors.CustomAPIError('Invalid value type', status_code=400, payload={'value type':value_characteristics['values']['type']})
 
-		group = value_characteristics['values']['group']
+		# Get minimum value for score (only works with a type)
+		if "min" in value_characteristics['values']:
+			checks['min'] = True
+			minimum_value = value_characteristics['values']['min']
+		
+		# Get maximum value for score (only works with a type)
+		if "max" in value_characteristics['values']:
+			checks['max'] = True
+			maximum_value = value_characteristics['values']['max']
 
+	# Determine start and end point to search for the score
+	start = 0
+	end   = len(sentence)
+	if "position" in value_characteristics['values']:
 		start = match.start(0) + value_characteristics['values']['position']['before']
 		end   = match.end(0) + value_characteristics['values']['position']['after']
 
-		check_constraints = True
 
 
-	result = []
+
 	temp_score = None
-	min_diff = 100000
+	min_diff   = 100000
 
 	matches = pattern.finditer(sentence[start : end])
 	for m in matches:
+		# Replace commas by decimals (for floats)
 		temp_value = re.sub(r'(\d),(\d)', '\1\.\2', m.group(group))
 
-		difference = 0
+		# Find the difference between the found score and the position of the score's name
+		difference = 100000
 		if m.start(group)+start < match.start(0):
 			difference = match.start(0) - (start+m.end(group))
 		elif m.start(group)+start > match.start(0):
 			difference = m.start(group)+start - match.end(0)
 
-		try:
-			if not check_constraints:
-				if difference < min_diff:
-					temp_score = temp_value
-					min_diff = difference
+		# Try to convert score to requested type (if needed)
+		if checks['type']:
+			try:
+				value = function(temp_value)
+			except ValueError:
 				continue
 
-			value = function(temp_value)
-			if value >= value_characteristics['values']['min'] and value <= value_characteristics['values']['max']:
-				if difference < min_diff:
-					temp_score = temp_value
-					min_diff = difference
+			if checks['min'] and value < minimum_value:
 				continue
-		except ValueError:
-			continue
+
+			if checks['max'] and value > maximum_value:
+				continue
+
+			temp_value = value
+
+
+		# Only store score closest to score's name
+		if difference < min_diff:
+			temp_score = temp_value
+			min_diff = difference
+
 
 	if temp_score is None:
 		return None
 
-	result.append(temp_score)
-	return result
+	return [temp_score]

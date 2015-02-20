@@ -186,7 +186,10 @@ class TestExtractionFunctions(unittest.TestCase):
 					'agatstonscore',
 					'kalkscore',
 					'calciumscore'
-				]
+				],
+				'values' : {
+				
+				}
 			}
 		}
 		r = requests.post(self.base_url, data=json.dumps(self.data), headers=self.headers)
