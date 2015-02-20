@@ -96,7 +96,7 @@ class TestSimpleFunctions(unittest.TestCase):
 class TestExtractionFunctions(unittest.TestCase):
 
 	def setUp(self):
-		self.data = {"text" : "Example sentences, which can be tokenized. The first agatston score is 612 (59ste mesa percentiel). We can also split the sentences. We can extract scores like an agatston score of 612 which is the 23e MESA percentiel. Other agatston scores are -9 which is too low. Also, 8,6 for agatston is incorrect. Finally, an agatston score of 40000 is too high to be possible."}
+		self.data = {"text" : "Example sentences, which can be tokenized. The first agatston score is 432 (mesa percentiel 22). We can also split the sentences. We can extract scores like an agatston score of 612 which is the 23e MESA percentiel. Other agatston scores are -9 which is too low. Also, 8,6 for agatston is incorrect. Finally, an agatston score of 40000 is too high to be possible."}
 		self.health_scores = {
 			'agatston' : {
 				'synonyms' : [
@@ -128,7 +128,7 @@ class TestExtractionFunctions(unittest.TestCase):
 					'type' : "int",
 					'min' : 0,
 					'max' : 100,
-					'format' : ":*(\d{1,2})(e|ste)*",
+					'format' : "\D(\d+)\D",
 					'group' : 1,
 					'position' : {
 						'before'  : -10,

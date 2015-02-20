@@ -205,6 +205,8 @@ def _extract_value_wtr(sentence, value_characteristics, match):
 		# Replace commas by decimals (for floats)
 		temp_value = re.sub(r'(\d),(\d)', '\1\.\2', m.group(group))
 
+		print m.group(group)
+
 		# Find the difference between the found score and the position of the score's name
 		difference = 100000
 		if m.start(group)+start < match.start(0):
@@ -261,7 +263,7 @@ def _characteristics(metric):
 				'type' : "int",
 				'min' : 0,
 				'max' : 100,
-				'format' : ":*(\d{1,2})(e|ste)*",
+				'format' : "\D(\d+)\D",
 				'group' : 1,
 				'position' : {
 					'before'  : -10,
