@@ -188,7 +188,7 @@ class TestExtractionFunctions(unittest.TestCase):
 					'calciumscore'
 				],
 				'values' : {
-				
+
 				}
 			}
 		}

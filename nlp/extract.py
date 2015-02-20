@@ -33,7 +33,6 @@ def _extraction_wtr(metrics, text):
 
 		## UGLY HACK TO GET CONSTRAINTS IN CODE
 		metrics[m]['values'] = _characteristics(m)
-		print metrics[m]['values']
 		## END OF HACK
 
 		pattern = create_pattern("(" + "|".join(metrics[m]['synonyms']) + ")")
@@ -76,8 +75,7 @@ def _extraction_wtr(metrics, text):
 			unique_scores.update(score['values'])
 
 		if len(unique_scores) == 1:
-			result["findings"][m] = found_scores[m][0]
-			result["findings"][m]['confidence'] = "certain"
+			result["findings"][m] = [found_scores[m][0]]
 		else:
 			result["findings"][m] = found_scores[m]
 
