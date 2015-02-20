@@ -96,7 +96,7 @@ class TestSimpleFunctions(unittest.TestCase):
 class TestExtractionFunctions(unittest.TestCase):
 
 	def setUp(self):
-		self.data = {"text" : "Example sentences, which can be tokenized. The first agatston score is 612. We can also split the sentences. We can extract scores like an agatston score of 432. Other agatston scores are -9 which is too low. Also, 8,6 for agatston is incorrect. Finally, an agatston score of 40000 is too high to be possible."}
+		self.data = {"text" : "Example sentences, which can be tokenized. The first agatston score is 612 (59ste mesa percentiel). We can also split the sentences. We can extract scores like an agatston score of 612 which is the 23e MESA percentiel. Other agatston scores are -9 which is too low. Also, 8,6 for agatston is incorrect. Finally, an agatston score of 40000 is too high to be possible."}
 		self.health_scores = {
 			'agatston' : {
 				'synonyms' : [
@@ -112,7 +112,28 @@ class TestExtractionFunctions(unittest.TestCase):
 					'min' : 0,
 					'max' : 9999,
 					'format' : "(\-*\d+)((,|\.)\d+)?",
-					'group' : 0
+					'group' : 0,
+					'position' : {
+						'before' : 0,
+						'after' : 40
+					}
+				}
+			},
+			'mesa' : {
+				'synonyms' : [
+					'MESA'
+				],
+
+				'values' : {
+					'type' : "int",
+					'min' : 0,
+					'max' : 100,
+					'format' : ":*(\d{1,2})(e|ste)*",
+					'group' : 1,
+					'position' : {
+						'before'  : -10,
+						'after' : 35
+					}
 				}
 			}
 		}
@@ -138,15 +159,22 @@ class TestExtractionFunctions(unittest.TestCase):
 		self.assertEquals(result['status'], 200)
 
 		#assert existence of json result
+		print result
 		self.assertTrue('result' in result)
 
 		# assert existence of agatston score in result
-		self.assertTrue('agatston' in result['result'])
+		self.assertTrue('agatston' in result['result']['findings'])
+		self.assertTrue('mesa' in result['result']['findings'])
 
 		# assert correct value of agatston
-		self.assertEquals(len(result['result']['agatston']), 2)
-		self.assertEquals(result['result']['agatston'][0]['value'], 612)
-		self.assertEquals(result['result']['agatston'][1]['value'], 432)
+		self.assertEquals(len(result['result']['findings']['agatston']), 2)
+		self.assertEquals(result['result']['findings']['agatston'][0]['values'], 612)
+		self.assertEquals(result['result']['findings']['agatston'][1]['values'], 432)
+
+		# assert correct value of mesa
+		self.assertEquals(len(result['result']['findings']['mesa']), 2)
+		self.assertEquals(result['result']['findings']['mesa'][0]['values'][0], 59)
+		self.assertEquals(result['result']['findings']['mesa'][1]['values'][0], 23)
 
 
 	def test_multiple_values_fuzzy(self):
@@ -206,15 +234,15 @@ class TestExtractionFunctions(unittest.TestCase):
 
 
 if __name__ == '__main__':
-	print "Testing basic API functionality\n"
-	suite = unittest.TestLoader().loadTestsFromTestCase(TestBasicAPI)
-	unittest.TextTestRunner(verbosity=2).run(suite)
-	print "\n\n"
+	# print "Testing basic API functionality\n"
+	# suite = unittest.TestLoader().loadTestsFromTestCase(TestBasicAPI)
+	# unittest.TextTestRunner(verbosity=2).run(suite)
+	# print "\n\n"
 
-	print "Testing simple text analysis functionality\n"
-	suite = unittest.TestLoader().loadTestsFromTestCase(TestSimpleFunctions)
-	unittest.TextTestRunner(verbosity=2).run(suite)
-	print "\n\n"
+	# print "Testing simple text analysis functionality\n"
+	# suite = unittest.TestLoader().loadTestsFromTestCase(TestSimpleFunctions)
+	# unittest.TextTestRunner(verbosity=2).run(suite)
+	# print "\n\n"
 
 	print "Testing extraction functionality\n"
 	suite = unittest.TestLoader().loadTestsFromTestCase(TestExtractionFunctions)
