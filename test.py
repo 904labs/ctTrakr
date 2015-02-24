@@ -94,9 +94,8 @@ class TestSimpleFunctions(unittest.TestCase):
 
 
 class TestExtractionFunctions(unittest.TestCase):
-
 	def setUp(self):
-		self.data = {"text" : "Example sentences, which can be tokenized. The first agatston score is 432 (mesa percentiel 22). We can also split the sentences. We can extract scores like an agatston score of 612 which is the 23e MESA percentiel. Other agatston scores are -9 which is too low. Also, 8,6 for agatston is incorrect. Finally, an agatston score of 40000 is too high to be possible."}
+		self.data = {"text" : "Example sentences, which can be tokenized met pizza brood voor unknownValue test. The first agatston score is 432 432 (mesa percentiel 22). We can also split the sentences. We can extract scores like an agatston score of 612 which is the 23e MESA percentiel. Other agatston scores are -9 which is too low. Also, for agatston 8,6 is incorrect. Finally, an agatston score of 40000 is too high to be possible. The following agatston is too far away to be considered useful 430."}
 		self.health_scores = {
 			'agatston' : {
 				'synonyms' : [
@@ -105,7 +104,7 @@ class TestExtractionFunctions(unittest.TestCase):
 					'agatstonscore',
 					'kalkscore',
 					'calciumscore'
-				], 
+				],
 
 				'values' : {
 					'type' : "int",
@@ -119,6 +118,12 @@ class TestExtractionFunctions(unittest.TestCase):
 					}
 				}
 			},
+
+			'unknownValue' : {
+				'synonyms' : ["pizza", "brood"],
+				'values' : {}
+			},
+
 			'mesa' : {
 				'synonyms' : [
 					'MESA'
@@ -141,7 +146,6 @@ class TestExtractionFunctions(unittest.TestCase):
 		self.headers = {'Content-Type': 'application/json'}
 		self.base_url = "http://127.0.0.1:5000/api/extract/health_scores"
 
-
 	def test_missing_health_scores(self):
 		r      = requests.post(self.base_url, data=json.dumps(self.data), headers=self.headers)
 		result = r.json()
@@ -159,7 +163,7 @@ class TestExtractionFunctions(unittest.TestCase):
 		self.assertEquals(result['status'], 200)
 
 		#assert existence of json result
-		print result
+		#print result
 		self.assertTrue('result' in result)
 
 		# assert existence of agatston score in result
@@ -167,14 +171,20 @@ class TestExtractionFunctions(unittest.TestCase):
 		self.assertTrue('mesa' in result['result']['findings'])
 
 		# assert correct value of agatston
-		self.assertEquals(len(result['result']['findings']['agatston']), 2)
-		self.assertEquals(result['result']['findings']['agatston'][0]['values'], 612)
-		self.assertEquals(result['result']['findings']['agatston'][1]['values'], 432)
+
+		self.assertEquals(len(result['result']['findings']['agatston']), 6)
+
+		# First 2 are 'good' findings
+		self.assertEquals(432, result['result']['findings']['agatston'][0]['value'])
+		self.assertEquals(612, result['result']['findings']['agatston'][1]['value'])
+
+		# Last 4 should be warnings (but still included for highlight / 'incorrect' value display)
+		self.assertTrue(-9 in [x['value'] for x in result['result']['findings']['agatston'][2]['optional'] ])
 
 		# assert correct value of mesa
 		self.assertEquals(len(result['result']['findings']['mesa']), 2)
-		self.assertEquals(result['result']['findings']['mesa'][0]['values'][0], 59)
-		self.assertEquals(result['result']['findings']['mesa'][1]['values'][0], 23)
+		self.assertEquals(22, result['result']['findings']['mesa'][0]['value'])
+		self.assertEquals(23, result['result']['findings']['mesa'][1]['value'])
 
 
 	def test_multiple_values_fuzzy(self):
@@ -187,9 +197,7 @@ class TestExtractionFunctions(unittest.TestCase):
 					'kalkscore',
 					'calciumscore'
 				],
-				'values' : {
-
-				}
+				'values' : {}
 			}
 		}
 		r = requests.post(self.base_url, data=json.dumps(self.data), headers=self.headers)
@@ -202,20 +210,28 @@ class TestExtractionFunctions(unittest.TestCase):
 		self.assertTrue('result' in result)
 
 		# assert existence of agatston score in result
-		self.assertTrue('agatston' in result['result'])
+		self.assertTrue('agatston' in result['result']['findings'])
 
 		# assert correct value of agatston
-		self.assertEquals(len(result['result']['agatston']), 5)
-		self.assertEquals(result['result']['agatston'][0]['value'], "612")
-		self.assertEquals(result['result']['agatston'][1]['value'], "432")
-		self.assertEquals(result['result']['agatston'][2]['value'], "-9")
-		self.assertEquals(result['result']['agatston'][3]['value'], "8,6")
-		self.assertEquals(result['result']['agatston'][4]['value'], "40000")
+		self.assertEquals(432, result['result']['findings']['agatston'][0]['value'])
+		self.assertEquals(612, result['result']['findings']['agatston'][1]['value'])
+
+		## Following values are not in the results, since 'hack' default values
+
+		# Too low
+		self.assertTrue(-9 in [x['value'] for x in result['result']['findings']['agatston'][2]['optional']])
+
+		# It is a float, but agatston accepts int, so give warning
+		self.assertTrue("8.6" in [x['value'] for x in result['result']['findings']['agatston'][3]['optional']])
+
+		# Too high
+		self.assertTrue(40000 in [x['value'] for x in result['result']['findings']['agatston'][4]['optional']])
 
 
 	def test_nonexistent_type(self):
 		self.data['health_scores'] = self.health_scores
-		self.data['health_scores']['agatston']['values']['type'] = "string"
+		self.data['health_scores']['unknownValue']['values']['type'] = "string"
+
 		r = requests.post(self.base_url, data=json.dumps(self.data), headers=self.headers)
 		result = r.json()
 
@@ -234,20 +250,110 @@ class TestExtractionFunctions(unittest.TestCase):
 			# assert status
 			self.assertEquals(result['status'], 200)
 
+class TestResultFormatting(unittest.TestCase):
+	def setUp(self):
+		self.data = {"text" : "RA (rheumatoid antigen) can be positive in several different conditions beyond rheumatoid arthritis.  It can also be incidentally positive without disease.  If it is specifically your muscles hurting and not your joints then rheumatoid arthritis seems a bit less likely for you."}
+		self.health_scores = {
+			'rheuma' : {
+				'synonyms' : [
+					"rheumatoid disease",
+					"atrofische artritis",
+					"rheumatoid arthritis"
+				]
+			}
+		}
+
+		self.headers = {'Content-Type': 'application/json'}
+		self.base_url = "http://127.0.0.1:5000/api/extract/health_scores"
+
+	'''
+	def test_without_valueDescription(self):
+		self.data['health_scores'] = self.health_scores
+
+		r      = requests.post(self.base_url, data=json.dumps(self.data), headers=self.headers)
+		result = r.json()
+
+		# Check if keys are properly returned
+		self.assertTrue('sentences' in result['result'])
+		self.assertTrue('findings'  in result['result'])
+		self.assertTrue(isinstance(result['result']['findings']['rheuma'], list))
+
+		self.assertEquals(result['status'], 200)
+
+	def test_empty_valueDescription(self):
+		self.data['health_scores'] = self.health_scores
+		self.data['health_scores']['rheuma']['values'] = {}
+
+		r      = requests.post(self.base_url, data=json.dumps(self.data), headers=self.headers)
+		result = r.json()
+
+		self.assertTrue('sentences' in result['result'])
+		self.assertTrue('findings'  in result['result'])
+		self.assertTrue(isinstance(result['result']['findings']['rheuma'], list))
+
+		self.assertEquals(result['status'], 200)
+
+	# If nothing is found it should return something
+	def test_empty_synonyms(self):
+		import copy
+
+		tempData = copy.copy(self.data)
+		tempData['health_scores'] = {
+			"rheuma" : {
+				"synonyms" : []
+			}
+		}
+
+		r      = requests.post(self.base_url, data=json.dumps(tempData), headers=self.headers)
+		result = r.json()
+
+		self.assertTrue('sentences' in result['result'])
+		self.assertTrue('findings'  in result['result'])
+		self.assertTrue(isinstance(result['result']['findings']['rheuma'], list))
+		self.assertEquals(len(result['result']['findings']['rheuma']), 0)
+
+		self.assertEquals(result['status'], 200)
+	'''
+
+	def test_unfound_synonyms(self):
+		import copy
+
+		tempData = copy.copy(self.data)
+		tempData['health_scores'] = {
+			"rheuma" : {
+				"synonyms" : ["924989ufhusadfhjehrewrwer9ae"]
+			}
+		}
+
+		r      = requests.post(self.base_url, data=json.dumps(tempData), headers=self.headers)
+		result = r.json()
+
+		self.assertTrue('sentences' in result['result'])
+		self.assertTrue('findings'  in result['result'])
+		self.assertTrue(isinstance(result['result']['findings']['rheuma'], list))
+		self.assertEquals(len(result['result']['findings']['rheuma']), 0)
+
+		self.assertEquals(result['status'], 200)
 
 
 if __name__ == '__main__':
-	# print "Testing basic API functionality\n"
-	# suite = unittest.TestLoader().loadTestsFromTestCase(TestBasicAPI)
-	# unittest.TextTestRunner(verbosity=2).run(suite)
-	# print "\n\n"
+	print "Testing basic API functionality\n"
+	suite = unittest.TestLoader().loadTestsFromTestCase(TestBasicAPI)
+	unittest.TextTestRunner(verbosity=2).run(suite)
+	print "\n\n"
 
-	# print "Testing simple text analysis functionality\n"
-	# suite = unittest.TestLoader().loadTestsFromTestCase(TestSimpleFunctions)
-	# unittest.TextTestRunner(verbosity=2).run(suite)
-	# print "\n\n"
+	print "Testing simple text analysis functionality\n"
+	suite = unittest.TestLoader().loadTestsFromTestCase(TestSimpleFunctions)
+	unittest.TextTestRunner(verbosity=2).run(suite)
+	print "\n\n"
+
+	print "Testing result format\n"
+	suite = unittest.TestLoader().loadTestsFromTestCase(TestResultFormatting)
+	unittest.TextTestRunner(verbosity=2).run(suite)
+	print "\n\n"
 
 	print "Testing extraction functionality\n"
 	suite = unittest.TestLoader().loadTestsFromTestCase(TestExtractionFunctions)
 	unittest.TextTestRunner(verbosity=2).run(suite)
 	print "\n\n"
+
