@@ -266,7 +266,6 @@ class TestResultFormatting(unittest.TestCase):
 		self.headers = {'Content-Type': 'application/json'}
 		self.base_url = "http://127.0.0.1:5000/api/extract/health_scores"
 
-	'''
 	def test_without_valueDescription(self):
 		self.data['health_scores'] = self.health_scores
 
@@ -313,7 +312,6 @@ class TestResultFormatting(unittest.TestCase):
 		self.assertEquals(len(result['result']['findings']['rheuma']), 0)
 
 		self.assertEquals(result['status'], 200)
-	'''
 
 	def test_unfound_synonyms(self):
 		import copy
