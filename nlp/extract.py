@@ -22,6 +22,11 @@ def health_scores(**kwargs):
 def _extraction_wtr(metrics, text):
 	sentences = simple.sentence_split(text=text)
 
+	result = {
+		"findings"  : {}
+		"sentences" : sentences
+	}
+
 	found_scores = {}
 
 	# search for scores, only move forward with the ones we actually find in text
@@ -76,9 +81,6 @@ def _extraction_wtr(metrics, text):
 
 	# Merge scores if we find the same score for one metric multiple times; status "certain"
 	# Store all scores if we find different scores for one metric; status "uncertain"
-	result = {
-		"findings" : {}
-	}
 
 	for m in found_scores:
 		unique_scores = set()
@@ -89,7 +91,6 @@ def _extraction_wtr(metrics, text):
 
 		result["findings"][m] = found_scores[m]
 
-	result["sentences"] = sentences
 	return result
 
 
