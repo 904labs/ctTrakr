@@ -23,7 +23,7 @@ def _extraction_wtr(metrics, text):
 	sentences = simple.sentence_split(text=text)
 
 	result = {
-		"findings"  : {}
+		"findings"  : {},
 		"sentences" : sentences
 	}
 
